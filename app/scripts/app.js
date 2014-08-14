@@ -1,201 +1,140 @@
 /** @jsx React.DOM */
 
 var Physics = require('rk4')
-  , Renderer = require('rk4/lib/renderer')
-  , Velocity = require('touch-velocity')
-  , eventEmitter = require('events')
-  , Vector = window.Vector = require('rk4/lib/vector')
+  , Vector = require('rk4/lib/vector')
   , width = $(window).width() - 100
   , height = $(window).height() - 100
-  , intersect = require('./util').intersect
-  , ChatBox = require('./chat')
-  , chatBox = new ChatBox()
-  , Promise = Promise || require('promise')
+
+require('./chat')
 
 $(window).on('touchmove', function(e) {
   e.preventDefault()
 })
 
 function TrailingHead(el, leadingHead) {
-  this.renderer = new Renderer([el])
-    .style('translateX', function(pos) { return pos.x + 'px' })
-    .style('translateY', function(pos) { return pos.y + 'px' })
+  this.phys = new Physics(el)
+    .style('translate', function(x, y) { return x + 'px, ' + y + 'px' })
 
-  this.phys = new Physics(this.setPosition.bind(this))
   this.leadingHead = leadingHead
-  this.position = this.leadingHead.position
-
   this.follow()
 }
 
-TrailingHead.prototype = new eventEmitter()
-
 TrailingHead.prototype.follow = function() {
-  this.phys.cancel()
-  var spring = this.phys.infiniSpring(0, this.leadingHead.position, { k: 600, b: 30 })
-
-  this.leadingHead.on('position', function(pos) {
-    spring.setDestination(Vector(pos))
-  })
-}
-
-TrailingHead.prototype.setPosition = function(pos) {
-  pos = Vector(pos)
-  this.position = pos
-  pos.x += 2
-  this.emit('position', pos)
-  this.renderer.update(pos)
+  this.phys.attachSpring(this.leadingHead, {
+    offset: { x: 2, y: 0 },
+    tension: 500,
+    damping: 25
+  }).start()
 }
 
 function ChatHead(els) {
-  this.startX = 0
-  this.startY = 0
-  this.deltaX = 0
-  this.deltaY = 0
-  this.mouseDown = false
-  this.veloX = new Velocity
-  this.veloY = new Velocity
   this.deleteJailed = false
-
-  this.position = Vector(0, 0)
 
   var el = els[els.length - 1]
     , head = this
 
+  var phys = window.phys = this.phys = new Physics(el)
+    .style('translate', function(x, y) { return x + 'px, ' + y + 'px' })
+
   this.chatHeads = [this]
+  this.boundry = Physics.Boundry({ top: 0, left: 0, bottom: height, right: width })
 
   for(var i = els.length - 2 ; i >= 0 ; i--) {
-    head = new TrailingHead(els[i], head)
+    head = new TrailingHead(els[i], head.phys)
     this.chatHeads.push(head)
   }
 
-  this.deleteRenderer = new Renderer([document.querySelector('.deleteTarget')])
-    .style('translateX', function(pos) { return pos.x + 'px' })
-    .style('translateY', function(pos) { return pos.y + 'px' })
-    .style('scale', function(pos) {
-      if(!pos.dist || pos.dist > 40)
-        return .7
-      return 1 - (.3 * (pos.dist / 40))
+  this.delPhys = new Physics(document.querySelector('.deleteTarget'))
+    .style({
+      translate: function(x, y) { return x + 'px, ' + y + 'px' },
+      scale: function(x, y) {
+        var dist = phys.position().selfSub(x, y).norm()
+        if(dist > 40)
+          return .7
+        return 1 - (.3 * (dist / 40))
+      }
     })
 
-  this.delIn = { x: $(window).width()/2 - 40, y: $(window).height() - 100, dist: 100 }
-  this.delOut = { x: $(window).width()/2 - 40, y: $(window).height() + 100, dist: 100 }
-  this.deleteRenderer.update(this.delOut)
+  this.delIn = { x: $(window).width()/2 - 40, y: $(window).height() - 100 }
+  this.delOut = { x: $(window).width()/2 - 40, y: $(window).height() + 100 }
 
-  this.renderer = new Renderer([el])
-    .style('translateX', function(pos) { return pos.x + 'px' })
-    .style('translateY', function(pos) { return pos.y + 'px' })
-
-  this.delPhys = new Physics(this.deleteRenderer.update.bind(this.deleteRenderer))
-  this.phys = new Physics(this.setPosition.bind(this))
+  this.delPhys.position(this.delOut)
 
   el.addEventListener('touchstart', this.start.bind(this))
   el.addEventListener('touchmove', this.move.bind(this))
   el.addEventListener('touchend', this.end.bind(this))
 }
 
-ChatHead.prototype = new eventEmitter()
-
-ChatHead.prototype.setPosition = function(pos) {
-  this.deltaX = pos.x
-  this.deltaY = pos.y
-
-  var delPos = this.deleteRenderer.currentPosition
-  var dist = Vector(delPos).sub(Vector(pos)).norm()
-  this.deleteRenderer.update({ x: delPos.x, y: delPos.y, dist: dist })
-  this.renderer.update(pos)
-  this.position = Vector(pos)
-  this.emit('position', pos)
-}
-
 ChatHead.prototype.start = function(evt) {
-  chatBox.close()
-
   this.mouseDown = true
   this.moved = false
-  this.phys.cancel()
-  this.delPhys.cancel()
 
-  this.startX = evt.touches[0].pageX - this.deltaX
-  this.startY = evt.touches[0].pageY - this.deltaY
+  this.interaction = phys.interact()
 
-  this.veloX.reset()
-  this.veloY.reset()
+  this.interaction.start(evt)
+  this.startX = evt.touches[0].pageX
+  this.startY = evt.touches[0].pageY
+  this.initialPosition = this.phys.position()
 }
 
 ChatHead.prototype.move = function(evt) {
   evt.preventDefault()
-  if(this.mouseDown) {
-    if(!this.moved) {
-      this.fannedOut = false
-      var delPos = this.deleteRenderer.currentPosition
-      this.delPhys.spring(0, delPos, this.delIn, { b: 20, k: 200 })
-      this.chatHeads.forEach(function(head, i) {
-        if(head.follow) head.follow()
-      })
-    }
-    this.moved = true
-    var pos = {
-      x: evt.touches[0].pageX - this.startX,
-      y: evt.touches[0].pageY - this.startY
-    }
+  if(!this.mouseDown) return
+  if(!this.moved) {
+    this.fannedOut = false
+    this.delPhys.spring({ damping: 20, tension: 200 })
+      .to(this.delIn).start()
+  }
+  this.moved = true
 
-    var delPos = this.deleteRenderer.currentPosition
-    var dist = Vector(delPos).sub(Vector(pos)).norm()
-    if(dist < 100) {
-      if(!this.deleteJailed) {
-        this.phys.spring(800, pos, { x: delPos.x - 2, y: delPos.y - 2 }, { k: 400, b: 20 })
-      }
-      this.deleteJailed = true
-      return
-    }
+  var delta = Vector({
+    x: evt.touches[0].pageX - this.startX,
+    y: evt.touches[0].pageY - this.startY
+  })
 
+  var that = this
+  var pos = this.initialPosition.add(delta)
+  var deletePosition = this.delPhys.position()
+  var dist = deletePosition.sub(Vector(pos)).norm()
+
+  if(dist < 100) {
+    if(!this.deleteJailed) {
+      this.interaction.end()
+      this.phys.spring({ tension: 400, damping: 20 })
+        .to(this.delIn.x - 2, this.delIn.y - 2)
+        .start()
+    }
+    this.deleteJailed = true
+  } else {
     if(this.deleteJailed) {
-      this.phys.cancel()
+      this.phys.position(pos)
+      this.interaction.start(evt)
+      this.deleteJailed = false
+    } else {
+      this.interaction.update(evt)
     }
-    this.deleteJailed = false
-
-    this.setPosition(pos)
-
-    this.renderer.update({ x: this.deltaX, y: this.deltaY })
-
-    this.veloX.updatePosition(this.deltaX)
-    this.veloY.updatePosition(this.deltaY)
   }
 }
 
+
 ChatHead.prototype.remove = function(start, velocity) {
-  var delPos = this.deleteRenderer.currentPosition
-    , that = this
+  var that = this
 
-  this.phys.cancel()
-  this.delPhys.cancel()
-  this.phys.accelerate(velocity.norm(), start, delPos, { acceleration: 5000 })
-  .then(function(state) {
-    var phys = new Physics(function(pos) {
-      pos.dist = 0
-      that.deleteRenderer.update(pos)
-      that.setPosition(pos)
+  var spring = this.phys.spring({ tension: 400, damping: 25 })
+    .to(that.delIn)
+    .start()
+    .then(function() {
+      setTimeout(function() {
+        that.chatHeads.forEach(function(head) {
+          head.phys.spring().to(that.delOut).start()
+        })
+        that.delPhys.spring().to(that.delOut).start()
+      }, 200)
+      that.chatHeads.forEach(function(head) {
+        head.phys.spring().to(that.delOut).start()
+      })
+      that.delPhys.spring().to(that.delOut).start()
     })
-    phys.accelerate(Math.abs(state.velocity.norm()), delPos, { x: delPos.x, y: height + 100 }, { acceleration: 1000 })
-  })
-}
-
-ChatHead.prototype.fanOut = function(evt) {
-  this.fannedOut = true
-  var promises = this.chatHeads.map(function(head, i) {
-    head.phys.cancel()
-    return head.phys.spring(
-      200,
-      head.position,
-      { x: width - (i * 70), y: 0 },
-      { b: 30, k: 300 }
-    )
-  })
-  Promise.race(promises)
-  .then(function() {
-    chatBox.open()
-  })
 }
 
 ChatHead.prototype.end = function(evt) {
@@ -209,21 +148,29 @@ ChatHead.prototype.end = function(evt) {
     this.chatHeads.forEach(function(head, i) {
       if(head.follow) head.follow()
     })
-    return
   }
 
-  var velocity = Vector(this.veloX.getVelocity(), this.veloY.getVelocity())
-    , start = Vector(this.deltaX, this.deltaY)
-    , end = intersect(start.clone(), velocity, 0, width, 0, height)
-    , delPos = this.deleteRenderer.currentPosition
+  this.interaction.end()
+  var end = this.boundry.nearestIntersect(this.phys.position(), this.phys.velocity())
 
-  if(this.deleteJailed || end.sub(Vector(delPos)).norm() < 100)
-    return this.remove(start, velocity)
+  if(this.deleteJailed || Vector(end).sub(this.delPhys.position()).norm() < 100)
+    return this.remove()
 
-  this.delPhys.cancel()
-  this.phys.cancel()
-  this.phys.spring(velocity, start, end, { b: 30, k: 300 })
-  this.delPhys.spring(200, delPos, this.delOut, { b: 20, k: 200 })
+  this.phys.spring({ damping: 30, tension: 300 })
+    .to(this.boundry).start()
+
+  this.delPhys.spring({ damping: 20, tension: 200 })
+    .to(this.delOut).start()
+  return
+}
+
+ChatHead.prototype.fanOut = function(evt) {
+  this.fannedOut = true
+  var promises = this.chatHeads.map(function(head, i) {
+    return head.phys.spring({ damping: 30, tension: 200 })
+      .to({ x: width - (i * 70), y: 0 }).start()
+  })
+  Promise.race(promises)
 }
 
 var c = new ChatHead(document.querySelectorAll('.chatHead'))

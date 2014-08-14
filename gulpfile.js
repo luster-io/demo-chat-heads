@@ -13,10 +13,7 @@ var $ = require('gulp-load-plugins')();
 // Scripts
 gulp.task('scripts', function () {
     return gulp.src('app/scripts/app.js')
-        .pipe($.browserify({
-            insertGlobals: true,
-            transform: ['reactify']
-        }))
+        .pipe($.browserify())
         .pipe($.jshint('.jshintrc'))
         .pipe($.jshint.reporter('default'))
         .pipe(gulp.dest('dist/scripts'))
@@ -113,10 +110,10 @@ gulp.task('watch', ['html', 'bundle', 'connect'], function () {
     // Watch .html files
     gulp.watch('app/*.html', ['html']);
 
-    
 
 
 
+    gulp.watch('node_modules/rk4/lib/*.js', ['scripts']);
 
 
     // Watch .jsx files
