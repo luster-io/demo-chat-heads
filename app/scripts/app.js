@@ -1,10 +1,9 @@
 /** @jsx React.DOM */
 
-var Physics = require('rk4')
-  , Vector = require('rk4/lib/vector')
+var Physics = require('impulse')
   , width = $(window).width() - 100
   , height = $(window).height() - 100
-
+  , Vector = require('impulse/lib/vector')
 require('./chat')
 
 $(window).on('touchmove', function(e) {

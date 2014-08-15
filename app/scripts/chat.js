@@ -1,5 +1,4 @@
-var Physics = require('rk4')
-  , Renderer = require('rk4/lib/renderer')
+var Physics = require('impulse')
 
 function ChatBox() {
   this.el = document.querySelector('.chat')
