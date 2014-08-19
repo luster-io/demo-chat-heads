@@ -1,9 +1,10 @@
 /** @jsx React.DOM */
 
 var Physics = require('impulse')
-  , width = $(window).width() - 100
-  , height = $(window).height() - 100
   , Vector = require('impulse/lib/vector')
+  , width = $(window).width() - 70
+  , height = $(window).height() - 90
+
 require('./chat')
 
 $(window).on('touchmove', function(e) {
@@ -80,6 +81,11 @@ ChatHead.prototype.move = function(evt) {
   evt.preventDefault()
   if(!this.mouseDown) return
   if(!this.moved) {
+    if(this.fannedOut) {
+      this.chatHeads.forEach(function(head, i) {
+        if(head.follow) head.follow()
+      })
+    }
     this.fannedOut = false
     this.delPhys.spring({ damping: 20, tension: 200 })
       .to(this.delIn).start()
@@ -96,7 +102,7 @@ ChatHead.prototype.move = function(evt) {
   var deletePosition = this.delPhys.position()
   var dist = deletePosition.sub(Vector(pos)).norm()
 
-  if(dist < 100) {
+  if(dist < 60) {
     if(!this.deleteJailed) {
       this.interaction.end()
       this.phys.spring({ tension: 400, damping: 20 })
@@ -166,10 +172,10 @@ ChatHead.prototype.end = function(evt) {
 ChatHead.prototype.fanOut = function(evt) {
   this.fannedOut = true
   var promises = this.chatHeads.map(function(head, i) {
-    return head.phys.spring({ damping: 30, tension: 200 })
-      .to({ x: width - (i * 70), y: 0 }).start()
+    return head.phys.spring({ damping: 20, tension: 200 })
+      .to({ x: width - (i * 60), y: 0 }).start()
   })
-  Promise.race(promises)
+  Promise.all(promises)
 }
 
 var c = new ChatHead(document.querySelectorAll('.chatHead'))

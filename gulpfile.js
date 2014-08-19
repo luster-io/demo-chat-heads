@@ -5,11 +5,6 @@ var gulp = require('gulp');
 // Load plugins
 var $ = require('gulp-load-plugins')();
 
-
-
-
-
-
 // Scripts
 gulp.task('scripts', function () {
     return gulp.src('app/scripts/app.js')
@@ -20,21 +15,6 @@ gulp.task('scripts', function () {
         .pipe($.size())
         .pipe($.connect.reload());
     });
-
-// React precomiler
-// gulp.task('jsx', function () {
-//     return gulp.src('app/scripts/**/*.jsx', {base: 'app/scripts'})
-//         .pipe($.react())
-//         .pipe($.jshint('.jshintrc'))
-//         .pipe($.jshint.reporter('default'))
-//         .pipe(gulp.dest('app/scripts'))
-//         .pipe($.size())
-//         .pipe($.connect.reload());
-//     });
-
-
-
-
 
 // HTML
 gulp.task('html', function () {
@@ -79,7 +59,7 @@ gulp.task('default', ['clean'], function () {
 // Connect
 gulp.task('connect', $.connect.server({
     root: ['dist'],
-    port: 9000,
+    port: 9001,
     livereload: true
 }));
 

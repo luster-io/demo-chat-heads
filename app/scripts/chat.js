@@ -1,4 +1,5 @@
 var Physics = require('impulse')
+  , Renderer = require('impulse/lib/renderer')
 
 function ChatBox() {
   this.el = document.querySelector('.chat')
