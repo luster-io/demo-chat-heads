@@ -97,9 +97,9 @@ function ChatHead(els) {
 
   this.delPhys.position(this.delOut)
 
-  el.addEventListener('touchstart', this.start.bind(this))
-  el.addEventListener('touchmove', this.move.bind(this))
-  el.addEventListener('touchend', this.end.bind(this))
+  // el.addEventListener('touchstart', this.start.bind(this))
+  // el.addEventListener('touchmove', this.move.bind(this))
+  // el.addEventListener('touchend', this.end.bind(this))
 
   el.addEventListener('mousedown', this.start.bind(this))
   window.addEventListener('mousemove', this.move.bind(this))
@@ -107,6 +107,8 @@ function ChatHead(els) {
 }
 
 ChatHead.prototype.start = function(evt) {
+  console.log('start')
+  evt.preventDefault()
   this.mouseDown = true
   this.moved = false
 
@@ -119,8 +121,8 @@ ChatHead.prototype.start = function(evt) {
 }
 
 ChatHead.prototype.move = function(evt) {
-  evt.preventDefault()
   if(!this.mouseDown) return
+  evt.preventDefault()
   if(!this.moved) {
     if(this.fannedOut) {
       this.chatHeads.forEach(function(head, i) {
@@ -184,6 +186,8 @@ ChatHead.prototype.remove = function(start, velocity) {
 }
 
 ChatHead.prototype.end = function(evt) {
+  if(!this.mouseDown) return
+  evt.preventDefault()
   this.mouseDown = false
   if(!this.moved && !this.fannedOut) {
       this.fanOut()
@@ -743,7 +747,6 @@ function Drag(phys, opts, start) {
   } else {
     handles = phys.els
   }
-  console.log(handles)
   handles.forEach(this._setupHandle, this)
 }
 
@@ -989,7 +992,7 @@ Interact.prototype.start = function(evt) {
 
 Interact.prototype.cancel = function() {
   this._running = false
-  this._reject(new Error('Canceled the interaction'))
+  this._resolve({ velocity: this._phys.velocity(), position: this._phys.position() })
 }
 
 Interact.prototype.running = function() {
@@ -1001,6 +1004,7 @@ Interact.prototype.end = function() {
   this._resolve({ velocity: this._phys.velocity(), position: this._phys.position() })
   return this._ended
 }
+
 },{"./boundry":8,"./util":16,"./vector":17,"Promise":19,"lodash.defaults":22,"touch-velocity":31}],13:[function(require,module,exports){
 var prefixes = ['Webkit', 'Moz', 'Ms', 'ms']
 var calls = []
@@ -1203,7 +1207,6 @@ var Spring = module.exports = Animation({
     damping: 10
   },
   onStart: function(velocity, from, to, opts, update) {
-    console.log(from, to)
     var body = this._body = new Body(velocity, from, {
       accelerate: function(state, t) {
         return state.position.selfSub(to)
