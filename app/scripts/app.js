@@ -22,9 +22,14 @@ function TrailingHead(el, leadingHead) {
 TrailingHead.prototype.follow = function() {
   this.phys.attachSpring(this.leadingHead, {
     offset: { x: 2, y: 0 },
-    tension: 500,
-    damping: 25
+    tension: 700,
+    damping: 35
   }).start()
+}
+
+function page(evt, axis) {
+  var page = 'page' + axis.toUpperCase()
+  return (evt.touches && evt.touches[0][page]) || evt[page]
 }
 
 function ChatHead(els) {
@@ -63,6 +68,10 @@ function ChatHead(els) {
   el.addEventListener('touchstart', this.start.bind(this))
   el.addEventListener('touchmove', this.move.bind(this))
   el.addEventListener('touchend', this.end.bind(this))
+
+  el.addEventListener('mousedown', this.start.bind(this))
+  window.addEventListener('mousemove', this.move.bind(this))
+  window.addEventListener('mouseup', this.end.bind(this))
 }
 
 ChatHead.prototype.start = function(evt) {
@@ -72,8 +81,8 @@ ChatHead.prototype.start = function(evt) {
   this.interaction = phys.interact()
 
   this.interaction.start(evt)
-  this.startX = evt.touches[0].pageX
-  this.startY = evt.touches[0].pageY
+  this.startX = page(evt, 'x')
+  this.startY = page(evt, 'y')
   this.initialPosition = this.phys.position()
 }
 
@@ -93,8 +102,8 @@ ChatHead.prototype.move = function(evt) {
   this.moved = true
 
   var delta = Vector({
-    x: evt.touches[0].pageX - this.startX,
-    y: evt.touches[0].pageY - this.startY
+    x: page(evt, 'x') - this.startX,
+    y: page(evt, 'y') - this.startY
   })
 
   var that = this
@@ -161,7 +170,7 @@ ChatHead.prototype.end = function(evt) {
   if(this.deleteJailed || Vector(end).sub(this.delPhys.position()).norm() < 100)
     return this.remove()
 
-  this.phys.spring({ damping: 30, tension: 300 })
+  this.phys.spring({ damping: 30, tension: 250 })
     .to(this.boundry).start()
 
   this.delPhys.spring({ damping: 20, tension: 200 })
