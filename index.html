@@ -1,0 +1,103 @@
+<!doctype html>
+<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>         <html class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js"> <!--<![endif]-->
+    <head>
+        <meta charset="utf-8">
+        <title>chat heads</title>
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width,height=device-height,user-scalable=no,initial-scale=1.0,maximum-scale=1.0,minimum-scale=1.0">
+        <style>
+
+          body {
+            background-image: url("images/congruent_outline.png");
+          }
+
+          .chatHead {
+            position: fixed;
+            z-index: 2;
+          }
+
+          *, *:before, *:after {
+            -moz-box-sizing: border-box; -webkit-box-sizing: border-box; box-sizing: border-box;
+          }
+
+          .chatHead img {
+            width: 50px;
+            border: .5px solid #777;
+            border-radius: 100px;
+          }
+
+          .deleteTarget {
+            width: 60px;
+            height: 60px;
+            border-radius: 100px;
+            border: 1px solid white;
+            box-sizing: boder-box;
+            position: fixed;
+            top: 0;
+            left: 0;
+            -webkit-transform: scale(.8);
+            -webkit-transform-origin: center center;
+            color: white;
+            text-align: center;
+            line-height: 50px;
+            font-size: 50px;
+          }
+
+          .chat {
+            z-index: 1;
+            position: fixed;
+            top: 90px;
+            bottom: 50px;
+            left: 50px;
+            right: 50px;
+            color: #3D3D3D;
+            background: #FFFFFF;
+            line-height: 30px;
+            text-align: center;
+            border-radius: 6px;
+            -webkit-transform: scale(1) translateZ(0);
+            -webkit-transform-origin: calc(100% - 45px) top;
+            opacity: 0.0000001;
+          }
+
+          .chat span {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+          }
+
+          .chat:after {
+            content: '';
+            position: absolute;
+            bottom: 100%;
+            right: 46px;
+            margin-left: -8px;
+            width: 0; height: 0;
+            border-bottom: 8px solid #FFFFFF;
+            border-right: 8px solid transparent;
+            border-left: 8px solid transparent;
+          }
+        </style>
+    </head>
+    <body>
+        <div class="chatHead two">
+          <img src="https://pbs.twimg.com/profile_images/2210287726/TwitterProfile.png">
+        </div>
+        <div class="chatHead three">
+          <img src="https://avatars3.githubusercontent.com/u/591805?s=140">
+        </div>
+        <div class="chatHead three">
+          <img src="https://avatars2.githubusercontent.com/u/1274?s=140">
+        </div>
+        <div class="chatHead one">
+          <img src="https://avatars2.githubusercontent.com/u/94472?s=140">
+        </div>
+        <div class="deleteTarget">&times;</div>
+
+        <script src="http://code.jquery.com/jquery-2.1.1.js"></script>
+        <script src="scripts/app.js"></script>
+    </body>
+</html>
