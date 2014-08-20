@@ -65,9 +65,9 @@ function ChatHead(els) {
 
   this.delPhys.position(this.delOut)
 
-  // el.addEventListener('touchstart', this.start.bind(this))
-  // el.addEventListener('touchmove', this.move.bind(this))
-  // el.addEventListener('touchend', this.end.bind(this))
+  el.addEventListener('touchstart', this.start.bind(this))
+  el.addEventListener('touchmove', this.move.bind(this))
+  el.addEventListener('touchend', this.end.bind(this))
 
   el.addEventListener('mousedown', this.start.bind(this))
   window.addEventListener('mousemove', this.move.bind(this))
