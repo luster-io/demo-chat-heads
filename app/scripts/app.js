@@ -65,9 +65,9 @@ function ChatHead(els) {
 
   this.delPhys.position(this.delOut)
 
-  el.addEventListener('touchstart', this.start.bind(this))
-  el.addEventListener('touchmove', this.move.bind(this))
-  el.addEventListener('touchend', this.end.bind(this))
+  // el.addEventListener('touchstart', this.start.bind(this))
+  // el.addEventListener('touchmove', this.move.bind(this))
+  // el.addEventListener('touchend', this.end.bind(this))
 
   el.addEventListener('mousedown', this.start.bind(this))
   window.addEventListener('mousemove', this.move.bind(this))
@@ -75,6 +75,7 @@ function ChatHead(els) {
 }
 
 ChatHead.prototype.start = function(evt) {
+  evt.preventDefault()
   this.mouseDown = true
   this.moved = false
 
@@ -87,8 +88,8 @@ ChatHead.prototype.start = function(evt) {
 }
 
 ChatHead.prototype.move = function(evt) {
-  evt.preventDefault()
   if(!this.mouseDown) return
+  evt.preventDefault()
   if(!this.moved) {
     if(this.fannedOut) {
       this.chatHeads.forEach(function(head, i) {
@@ -152,6 +153,8 @@ ChatHead.prototype.remove = function(start, velocity) {
 }
 
 ChatHead.prototype.end = function(evt) {
+  if(!this.mouseDown) return
+  evt.preventDefault()
   this.mouseDown = false
   if(!this.moved && !this.fannedOut) {
       this.fanOut()

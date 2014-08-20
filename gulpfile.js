@@ -87,7 +87,7 @@ gulp.task('watch', ['html', 'images', 'bundle', 'connect'], function () {
 
 
 
-    gulp.watch('node_modules/rk4/lib/*.js', ['scripts']);
+    gulp.watch('node_modules/impulse/lib/*.js', ['scripts']);
 
 
     // Watch .jsx files
