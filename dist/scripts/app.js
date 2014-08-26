@@ -123,12 +123,6 @@ ChatHead.prototype.move = function(evt) {
   if(!this.mouseDown) return
   evt.preventDefault()
   if(!this.moved) {
-    if(this.fannedOut) {
-      this.chatHeads.forEach(function(head, i) {
-        if(head.follow) head.follow()
-      })
-    }
-    this.fannedOut = false
     this.delPhys.spring({ damping: 20, tension: 200 })
       .to(this.delIn).start()
   }
@@ -188,21 +182,17 @@ ChatHead.prototype.end = function(evt) {
   if(!this.mouseDown) return
   evt.preventDefault()
   this.mouseDown = false
-  if(!this.moved && !this.fannedOut) {
-      this.fanOut()
-      return
-  }
-  if(!this.moved && this.fannedOut) {
-    this.fannedOut = false
-    this.chatHeads.forEach(function(head, i) {
-      if(head.follow) head.follow()
-    })
-  }
 
   this.interaction.end()
   var end = this.boundry.nearestIntersect(this.phys.position(), this.phys.velocity())
 
-  if(this.deleteJailed || Vector(end).sub(this.delPhys.position()).norm() < 100)
+  var thrownTowardsDelete =
+    Vector(end).sub(this.delPhys.position()).norm() < 100 &&
+    this.phys.velocity().norm() > 200
+
+  var nearDelete = this.phys.position().sub(this.delPhys.position()).norm() < 100
+
+  if(this.deleteJailed || thrownTowardsDelete || nearDelete)
     return this.remove()
 
   this.phys.spring({ damping: 30, tension: 250 })
@@ -211,15 +201,6 @@ ChatHead.prototype.end = function(evt) {
   this.delPhys.spring({ damping: 20, tension: 200 })
     .to(this.delOut).start()
   return
-}
-
-ChatHead.prototype.fanOut = function(evt) {
-  this.fannedOut = true
-  var promises = this.chatHeads.map(function(head, i) {
-    return head.phys.spring({ damping: 20, tension: 200 })
-      .to({ x: width - (i * 60), y: 0 }).start()
-  })
-  Promise.all(promises)
 }
 
 var c = new ChatHead(document.querySelectorAll('.chatHead'))
