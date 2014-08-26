@@ -23,7 +23,7 @@ TrailingHead.prototype.follow = function() {
   this.phys.attachSpring(this.leadingHead, {
     offset: { x: 2, y: 0 },
     tension: 700,
-    damping: 35
+    damping: 25
   }).start()
 }
 
