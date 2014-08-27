@@ -55,7 +55,7 @@ TrailingHead.prototype.follow = function() {
   this.phys.attachSpring(this.leadingHead, {
     offset: { x: 2, y: 0 },
     tension: 700,
-    damping: 25
+    damping: 38
   }).start()
 }
 
@@ -283,7 +283,8 @@ var Accelerate = module.exports = Animation({
     acceleration: 1000,
     bounce: false,
     minBounceDistance: 5,
-    damping: 0.2
+    damping: 0.2,
+    restitution: 0.2
   },
 
   onStart: function(velocity, from, to, opts, update, done) {
@@ -298,9 +299,11 @@ var Accelerate = module.exports = Animation({
     })
     var bouncing
 
-    if(to.sub(from).norm() < .001) {
+    if(to.sub(from).norm() < .001 && velocity.norm() < .001) {
       return update.done(to, velocity)
     }
+
+    var restitution = opts.restitution || opts.damping // TODO remove damping
 
     var body = this._body = Body(velocity, from, {
       accelerate: function(s, t) {
@@ -314,7 +317,7 @@ var Accelerate = module.exports = Animation({
           update.state(position, velocity)
         } else {
           if(opts.bounce &&
-             Math.abs(height(bounceAcceleration.norm(), velocity.norm() * opts.damping, 0)) > opts.minBounceDistance) {
+             Math.abs(height(bounceAcceleration.norm(), velocity.norm() * restitution, 0)) > opts.minBounceDistance) {
               bouncing = true
               body.position = Vector(to)
               body.velocity.selfMult(-opts.damping)
@@ -2199,7 +2202,6 @@ var now = require('performance-now')
   , suffix = 'AnimationFrame'
   , raf = global['request' + suffix]
   , caf = global['cancel' + suffix] || global['cancelRequest' + suffix]
-  , native = true
 
 for(var i = 0; i < vendors.length && !raf; i++) {
   raf = global[vendors[i] + 'Request' + suffix]
@@ -2209,8 +2211,6 @@ for(var i = 0; i < vendors.length && !raf; i++) {
 
 // Some versions of FF have rAF but not cAF
 if(!raf || !caf) {
-  native = false
-
   var last = 0
     , id = 0
     , queue = []
@@ -2227,16 +2227,12 @@ if(!raf || !caf) {
         // callbacks from appending listeners
         // to the current frame's queue
         queue.length = 0
-        for(var i = 0; i < cp.length; i++) {
-          if(!cp[i].cancelled) {
-            try{
-              cp[i].callback(last)
-            } catch(e) {
-              setTimeout(function() { throw e }, 0)
-            }
+        for (var i = 0; i < cp.length; i++) {
+          if (!cp[i].cancelled) {
+            cp[i].callback(last)
           }
         }
-      }, Math.round(next))
+      }, next)
     }
     queue.push({
       handle: ++id,
@@ -2255,20 +2251,11 @@ if(!raf || !caf) {
   }
 }
 
-module.exports = function(fn) {
+module.exports = function() {
   // Wrap in a new function to prevent
   // `cancel` potentially being assigned
   // to the native rAF function
-  if(!native) {
-    return raf.call(global, fn)
-  }
-  return raf.call(global, function() {
-    try{
-      fn.apply(this, arguments)
-    } catch(e) {
-      setTimeout(function() { throw e }, 0)
-    }
-  })
+  return raf.apply(global, arguments)
 }
 module.exports.cancel = function() {
   caf.apply(global, arguments)
