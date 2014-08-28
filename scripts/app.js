@@ -34,8 +34,6 @@ window.ChatBox = module.exports = ChatBox
 
 var Physics = require('impulse')
   , Vector = require('impulse/lib/vector')
-  , width = $(window).width() - 70
-  , height = $(window).height() - 90
 
 require('./chat')
 
@@ -65,16 +63,20 @@ function page(evt, axis) {
 }
 
 function ChatHead(els) {
+
+  var width = $(window).width()
+    , height = $(window).height()
+
   this.deleteJailed = false
 
   var el = els[els.length - 1]
     , head = this
 
-  var phys = window.phys = this.phys = new Physics(el)
+  var phys = this.phys = new Physics(el)
     .style('translate', function(x, y) { return x + 'px, ' + y + 'px' })
 
   this.chatHeads = [this]
-  this.boundry = Physics.Boundry({ top: 0, left: 0, bottom: height, right: width })
+  this.boundry = Physics.Boundry({ top: 0, left: 0, bottom: height - 90, right: width - 70 })
 
   for(var i = els.length - 2 ; i >= 0 ; i--) {
     head = new TrailingHead(els[i], head.phys)
@@ -92,8 +94,8 @@ function ChatHead(els) {
       }
     })
 
-  this.delIn = { x: $(window).width()/2 - 40, y: $(window).height() - 100 }
-  this.delOut = { x: $(window).width()/2 - 40, y: $(window).height() + 100 }
+  this.delIn = { x: width / 2 - 40, y: height - 100 }
+  this.delOut = { x: width / 2 - 40, y: height + 100 }
 
   this.delPhys.position(this.delOut)
 
@@ -111,7 +113,7 @@ ChatHead.prototype.start = function(evt) {
   this.mouseDown = true
   this.moved = false
 
-  this.interaction = phys.interact()
+  this.interaction = this.phys.interact()
 
   this.interaction.start(evt)
   this.startX = page(evt, 'x')
@@ -203,7 +205,9 @@ ChatHead.prototype.end = function(evt) {
   return
 }
 
-var c = new ChatHead(document.querySelectorAll('.chatHead'))
+$(function() {
+  var c = new ChatHead(document.querySelectorAll('.chatHead'))
+})
 
 },{"./chat":1,"impulse":11,"impulse/lib/vector":17}],3:[function(require,module,exports){
 // shim for using process in browser
@@ -736,7 +740,7 @@ function Drag(phys, opts, start) {
 Emitter(Drag.prototype)
 
 Drag.prototype.moved = function() {
-  return this._moved
+  return (this._interaction.distance() > 10)
 }
 
 Drag.prototype._setupHandle = function(el) {
@@ -756,9 +760,9 @@ Drag.prototype._setupHandle = function(el) {
 }
 
 Drag.prototype._start = function(evt) {
+  this._startTime = Date.now()
   evt.preventDefault()
   this._mousedown = true
-  this._moved = false
   this._interaction = this._phys.interact({
     boundry: this._opts.boundry,
     damping: this._opts.damping,
@@ -772,7 +776,6 @@ Drag.prototype._start = function(evt) {
 Drag.prototype._move = function(evt) {
   if(!this._mousedown) return
   evt.preventDefault()
-  this._moved = true
 
   this._interaction.update(evt)
   this.emit('move', evt)
@@ -939,7 +942,6 @@ Interact.prototype.position = function(x, y) {
 
   pos = boundry.applyDamping(pos, this._opts.damping)
 
-
   this._phys.position(pos)
 
   return this
@@ -962,6 +964,7 @@ Interact.prototype.start = function(evt) {
   this._running = true
   this._phys._startAnimation(this)
   this._startPosition = evt && evtPosition.sub(position)
+  this._initialPosition = this._phys.position()
 
   this._veloX = new Velocity()
   this._veloY = new Velocity()
@@ -972,6 +975,10 @@ Interact.prototype.start = function(evt) {
     that._resolve = res
     that._reject = rej
   })
+}
+
+Interact.prototype.distance = function() {
+  return this._initialPosition.sub(this._phys.position()).norm()
 }
 
 Interact.prototype.cancel = function() {
