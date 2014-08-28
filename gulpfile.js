@@ -49,7 +49,7 @@ gulp.task('bundle', ['scripts', 'bower'], function(){
 });
 
 // Build
-gulp.task('build', ['html', 'bundle', 'images', 'scripts']);
+gulp.task('build', ['html', 'bundle', 'images', 'styles']);
 
 // Default task
 gulp.task('default', ['clean'], function () {
