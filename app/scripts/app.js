@@ -2,8 +2,6 @@
 
 var Physics = require('impulse')
   , Vector = require('impulse/lib/vector')
-  , width = $(window).width() - 70
-  , height = $(window).height() - 90
 
 require('./chat')
 
@@ -33,16 +31,20 @@ function page(evt, axis) {
 }
 
 function ChatHead(els) {
+
+  var width = $(window).width()
+    , height = $(window).height()
+
   this.deleteJailed = false
 
   var el = els[els.length - 1]
     , head = this
 
-  var phys = window.phys = this.phys = new Physics(el)
+  var phys = this.phys = new Physics(el)
     .style('translate', function(x, y) { return x + 'px, ' + y + 'px' })
 
   this.chatHeads = [this]
-  this.boundry = Physics.Boundry({ top: 0, left: 0, bottom: height, right: width })
+  this.boundry = Physics.Boundry({ top: 0, left: 0, bottom: height - 90, right: width - 70 })
 
   for(var i = els.length - 2 ; i >= 0 ; i--) {
     head = new TrailingHead(els[i], head.phys)
@@ -60,8 +62,8 @@ function ChatHead(els) {
       }
     })
 
-  this.delIn = { x: $(window).width()/2 - 40, y: $(window).height() - 100 }
-  this.delOut = { x: $(window).width()/2 - 40, y: $(window).height() + 100 }
+  this.delIn = { x: width / 2 - 40, y: height - 100 }
+  this.delOut = { x: width / 2 - 40, y: height + 100 }
 
   this.delPhys.position(this.delOut)
 
@@ -79,7 +81,7 @@ ChatHead.prototype.start = function(evt) {
   this.mouseDown = true
   this.moved = false
 
-  this.interaction = phys.interact()
+  this.interaction = this.phys.interact()
 
   this.interaction.start(evt)
   this.startX = page(evt, 'x')
@@ -171,4 +173,6 @@ ChatHead.prototype.end = function(evt) {
   return
 }
 
-var c = new ChatHead(document.querySelectorAll('.chatHead'))
+$(function() {
+  var c = new ChatHead(document.querySelectorAll('.chatHead'))
+})
