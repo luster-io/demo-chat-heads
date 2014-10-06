@@ -2,7 +2,7 @@
   "name": "chat-heads",
   "version": "0.0.1",
   "dependencies": {
-    "impulse": "0.0.4"
+    "impulse": "0.0.x"
   },
   "devDependencies": {
     "gulp": "~3.5.0",
